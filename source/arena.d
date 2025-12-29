@@ -67,7 +67,7 @@ struct Arena
 
     T* alloc(T, Args...)(size_t n, Args args) nothrow @nogc
     {
-        auto mem = cast(T*) allocate(n);
+        auto mem = cast(T*) allocate(n * T.sizeof);
         return emplace!T(mem, args);
     }
 
@@ -102,4 +102,3 @@ shared static Arena gInternArena;
 
 // TODO: implement `shared static this()` for initialization
 // TODO: implement functions for allocating on each arena
-
