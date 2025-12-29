@@ -222,6 +222,7 @@ struct Token
     {
         IntSuffix intSuffix;
         RealSuffix realSuffix;
+	bool wideChar;
     }
 
     @property isValid() const pure nothrow @nogc @safe
