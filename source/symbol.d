@@ -15,6 +15,7 @@ enum SymbolKind
     TYPEDEF,
     ENUM_CONST,
     STRUCT_TAG,
+    UNION_TAG,
     ENUM_TAG,
     LABEL,
 }
@@ -74,9 +75,14 @@ struct Symbol
         this.defnLoc = SourceLoc.uninit();
     }
 
-    void addFlag(SymbolFlags flag) @safe
+    void setFlag(SymbolFlags flag) @safe
     {
         this.flags |= flag;
+    }
+
+    void clearFlag(SymbolFlags flag) @safe
+    {
+        this.flags &= ~flag;
     }
 
     void setDeclLoc(SourceLoc loc) @safe
@@ -112,6 +118,31 @@ struct Symbol
     void setEnclosingFunc(Symbol func) @safe
     {
         this.enclosingFunc = func;
+    }
+
+    bool isAuto() const pure nothrow @nogc @safe
+    {
+        return this.storage == StorageClass.AUTO;
+    }
+
+    bool isStatic() const pure nothrow @nogc @safe
+    {
+        return this.storage == StorageClass.STATIC;
+    }
+
+    bool isExtern() const pure nothrow @nogc @safe
+    {
+        return this.storage == StorageClass.EXTERN;
+    }
+
+    bool isRegister() const pure nothrow @nogc @safe
+    {
+        return this.storage == StorageClass.REGISTER;
+    }
+
+    bool isTypedefST() const pure nothrow @nogc @safe
+    {
+        return this.storage == StorageClass.TYPEDEF;
     }
 
     bool isDefined() const pure nothrow @nogc @safe
@@ -172,5 +203,84 @@ struct Symbol
     bool isTemporary() const pure nothrow @nogc @safe
     {
         return this.flags & SymbolFlags.TEMPORARY;
+    }
+
+    bool isVariable() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.VARIABLE;
+    }
+
+    bool isFuncction() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.FUNCTION;
+    }
+
+    bool isParameter() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.PARAMETER;
+    }
+
+    bool isTypedef() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.TYPEDEF;
+    }
+
+    bool isEnumConstant() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.ENUM_CONSTANT;
+    }
+
+    bool isTag() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.STRUCT_TAG
+            || this.kind == SymbolKind.UNION_TAG || this.kind == SymbolKind.ENUM_TAG;
+    }
+
+    bool isLabel() const pure nothrow @nogc @safe
+    {
+        return this.kind == SymbolKind.LABEL;
+    }
+
+    bool hasExternalLinkage() const pure nothrow @nogc @safe
+    {
+        if (this.isFileScope())
+            return false;
+
+        if (this.isStatic())
+            return false;
+
+        return this.isFunction() || this.isVariable();
+    }
+
+    bool hasInternalLinkage() const pure nothrow @nogc @safe
+    {
+        if (this.isFileScope())
+            return false;
+
+        return this.isStatic();
+    }
+
+    bool hasNoLinkage() const pure nothrow @nogc @safe
+    {
+        if (this.isFileScope() && this.isStatic())
+            return true;
+
+        if (this.isParameter())
+            return true;
+
+        if (this.isTypedef() || this.isEnumConst() || this.isLabel())
+            return true;
+
+        return false;
+    }
+
+    bool livesOnStack() const pure nothrow @nogc @safe
+    {
+        return this.isRegister() || this.isAuto();
+    }
+
+    bool spillsToMemory() const pure nothrow @nogc @safe
+    {
+        // TODO
     }
 }
