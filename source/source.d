@@ -1,6 +1,6 @@
 module zetha.source;
 
-import zetha.strtbl : StringHandle, getStrTbl;
+import zetha.strpool : StringHandle, getStrTbl;
 import std.typecons : Nullable;
 
 struct SourcePos

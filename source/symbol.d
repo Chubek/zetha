@@ -1,6 +1,6 @@
 module zetha.symbol;
 
-import zetha.strtbl : StringHandle;
+import zetha.strpool : StringHandle;
 import zetha.source : SourceLoc;
 import zetha.ctype : CType;
 

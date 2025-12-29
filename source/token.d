@@ -1,6 +1,6 @@
 module zetha.token;
 
-import zetha.strtbl : StringHandle;
+import zetha.strpool : StringHandle;
 import zetha.source : SourceLoc, SourceRange;
 
 enum TokenKind : ubyte
