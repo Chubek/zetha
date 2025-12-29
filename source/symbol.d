@@ -46,10 +46,38 @@ enum StorageClass
     TYPEDEF,
 }
 
+struct SymbolAttributes
+{
+    bool addressTaken;
+    bool escapes;
+    bool isReadonly;
+    bool isVolatile;
+    bool isCompileTimeConst;
+    bool needsEmission;
+    bool emitted;
+    bool comdat;
+    bool pinnedReg;
+    bool mayAlias;
+    bool noAlias;
+    bool isLive;
+    bool hasLifetime;
+    bool isLoopLocal;
+    bool isCondDefined;
+    bool defInit;
+    bool mayInit;
+    bool zeroInit;
+
+    uint virtReg;
+    uint physReg;
+    uint useCount;
+    uint writeCount;
+}
+
 struct Symbol
 {
     StringHandle name;
     SymbolKind kind;
+    SymbolAttributes attrs;
     CType type;
     StorageClass storage;
     SymbolFlags flags;
@@ -281,6 +309,6 @@ struct Symbol
 
     bool spillsToMemory() const pure nothrow @nogc @safe
     {
-        // TODO
+        return !this.isRegister();
     }
 }
