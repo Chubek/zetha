@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Chubak Bidpaa <chubakbidpaa@riseup.net>"
+	],
+	"copyright": "Copyright © 2025, Chubak Bidpaa <chubakbidpaa@riseup.net>",
+	"description": "A minimal ANSI C compiler, modeled after lcc",
+	"license": "MIT",
+	"name": "zetha"
+}
