@@ -23,7 +23,8 @@ enum TypeKind : ubyte
     UNION,
     ENUM,
     TYPEDEF,
-    MISC,
+    BOOLEAN,
+    VOID,
 }
 
 enum IntegralTypeKind : ubyte
@@ -46,12 +47,6 @@ enum RealTypeKind : ubyte
     DOUBLE,
     LONG_DOUBLE,
     COMPLEX128,
-}
-
-enum MiscTypeKind : ubyte
-{
-    VOID,
-    BOOL,
 }
 
 abstract class CType
@@ -96,14 +91,9 @@ abstract class CType
         return this.kind == TypeKind.REAL;
     }
 
-    bool isMisc() const pure nothrow @nogc @safe
-    {
-        return this.kind == TypeKind.MISC;
-    }
-
     bool isBasic() const pure nothrow @nogc @safe
     {
-        return this.isIntegral() || this.isReal() || this.isMisc();
+        return this.isIntegral() || this.isReal() || this.isVoid() || this.isBoolean();
     }
 
     bool isPointer() const pure nothrow @nogc @safe
@@ -143,12 +133,12 @@ abstract class CType
 
     bool isVoid() const pure nothrow @nogc @safe
     {
-        return this.isMisc() && this.kind == MiscTypeKind.VOID;
+        return this.kind == TypeKind.VOID;
     }
 
     bool isBoolean() const pure nothrow @nogc @safe
     {
-        return this.isMisc() && this.kind == iscTypeKind.BOOL;
+        return this.kind = TypeKind.BOOL;
     }
 
     bool isArithmetic() const pure nothrow @nogc @safe
@@ -212,10 +202,91 @@ abstract class CType
         return withQualImpl(TypeQual.NONE);
     }
 
+    string toStringWithName(string variableName) pure @safe
+    {
+        return toStringWithNameImpl(variableName);
+    }
+
+    bool isCompatibleWith(const CType other) pure @safe
+    {
+        return isCompatibleWithImpl(other);
+    }
+
+    bool isConvertibleTo(const CType other) pure @safe
+    {
+        return isConvertibleToImpl(other);
+    }
+
+    CType castTo(const CType other) pure @safe
+    {
+        return castToImpl(other);
+    }
+
+    CType usualArithConv(const CType other) pure @safe
+    {
+        return usualArithConvImpl(other);
+    }
+
+    CType promoteType(const CType other) pure @safe
+    {
+        return promoteImpl(other);
+    }
+
     protected abstract CType withQualImpl(TypeQual newQual) pure @safe;
     protected abstract string toStringWithNameImpl(string name) pure @safe;
     protected abstract bool isCompatibleWithImpl(const CType other) const pure nothrow @safe;
     protected abstract bool isConvertibleToImpl(const CType other) const pure nothrow @safe;
     protected abstract CType castToImpl(const CType other) const pure nothrow @safe;
+    protected abstract CType usualArithConvImpl(const CType other) const pure nothrow @safe;
+    protected abstract CType promoteImpl(const CType other) const pure nothrow @safe;
+}
 
+class IntegralType : CType
+{
+    // TODO
+}
+
+class RealType : CType
+{
+    // TODO
+}
+
+class BooleanType : CType
+{
+    // TODO
+}
+
+class VoidType : CType
+{
+    // TODO
+}
+
+class ArrayType : CType
+{
+    // TODO
+}
+
+class PointerType : CType
+{
+    // TODO
+}
+
+class ArrayType : CType
+{
+    // TODO
+}
+
+class StructType : CType
+{
+    // TODO
+}
+
+class UnionType : CType
+{
+    // TODO
+}
+
+class TypedefType : CType
+{
+    // TODO
 }
