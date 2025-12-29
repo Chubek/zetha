@@ -53,7 +53,7 @@ struct Arena
         return this.lifetime;
     }
 
-    void* allocate(size_t reqSize, size_t reqAlign = (void*).alignof)
+    void* allocate(size_t reqSize, size_t reqAlign = (void*).alignof) @safe @trusted 
     {
         size_t aligned = (offset + reqAlign) & ~(reqAlign - 1);
 
@@ -65,13 +65,13 @@ struct Arena
         return mem;
     }
 
-    T* alloc(T, Args...)(size_t n, Args args)
+    T* alloc(T, Args...)(size_t n, Args args) @safe @trusted
     {
         auto mem = cast(T*) allocate(n * T.sizeof);
         return emplace!T(mem, args);
     }
 
-    T[] allocArray(T, Args...)(size_t n, Args args)
+    T[] allocArray(T, Args...)(size_t n, Args args) @safe @trusted @nogc
     {
         T* pointer = this.alloc!T(n, args);
         T[] array = pointer[0 .. n];
@@ -83,7 +83,7 @@ struct Arena
         offset = 0;
     }
 
-    private void grow(size_t minBytes)
+    private void grow(size_t minBytes) @safe @trusted
     {
         size_t newSize = capacity * GROWTH_RATE;
         while (newSize < offset + minBytes)
