@@ -71,6 +71,13 @@ struct Arena
         return emplace!T(mem, args);
     }
 
+    T[] allocArray(T, Args...)(size_t n, Args args)
+    {
+        T* pointer = this.alloc!T(n, args);
+        T[] array = pointer[0 .. n];
+        return array;
+    }
+
     void reset()
     {
         offset = 0;
