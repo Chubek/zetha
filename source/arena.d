@@ -35,7 +35,7 @@ struct Arena
 
         this.capacity = size;
         this.offset = 0;
-	this.lifetime = lifetime;
+        this.lifetime = lifetime;
     }
 
     ~this()
@@ -65,13 +65,13 @@ struct Arena
         return mem;
     }
 
-    T* alloc(T, Args...)(size_t n, Args args) g
+    T* alloc(T, Args...)(size_t n, Args args)
     {
         auto mem = cast(T*) allocate(n * T.sizeof);
         return emplace!T(mem, args);
     }
 
-    void reset() 
+    void reset()
     {
         offset = 0;
     }
@@ -87,11 +87,9 @@ struct Arena
         if (newBuf is null)
             getDiagEngine().invokeMacro(Macros.MEMORY_ALLOCATION_FAILURE);
 
-        this.buffer = cast(ubyte*)memmove(newBuf, this.buffer, newSize);
+        this.buffer = cast(ubyte*) memmove(newBuf, this.buffer, newSize);
 
         if (this.buffer is null)
             getDiagEngine().fatal("Memory reallocation failed").thenExit();
     }
 }
-
-
