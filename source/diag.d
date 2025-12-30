@@ -131,5 +131,26 @@ enum DiagCode : ushort
     InternalError,
 
     Unknown = 0,
+}
 
+Severity defaultSeverity(DiagCode code) pure nothrow @nogc @safe
+{
+    final switch (code)
+    {
+    case DiagCode.MultiCharLiteral:
+    case DiagCode.ImplicitConversion:
+    case DiagCode.SignCompare:
+    case DiagCode.UnusedVariable:
+    case DiagCode.UnusedParameter:
+    case DiagCode.ShadowedVariable:
+    case DiagCode.UninitializedVariable:
+        return Severity.Warning;
+
+    case DiagCode.InternalError:
+    case DiagCode.TooManyErrors:
+        return Severity.Fatal;
+
+    default:
+        return Severity.Error;
+    }
 }
