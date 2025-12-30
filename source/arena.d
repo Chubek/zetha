@@ -5,8 +5,6 @@ import core.memory : GC;
 import core.lifetime : emplace;
 import std.algorithm : max;
 
-import zetha.diag : getDiagEngine, Macros;
-
 enum GROWTH_RATE = 2;
 enum INIT_SIZE = 2048;
 
@@ -31,7 +29,7 @@ struct Arena
         this.buffer = cast(ubyte*) GC.malloc(size, GC.BlkAttr.NO_SCAN);
 
         if (this.buffer is null)
-            getDiagEngine().invokeMacro(Macros.MEMORY_ALLOCATION_FAILURE);
+            throw new Exception("Null buffer");
 
         this.capacity = size;
         this.offset = 0;
@@ -53,7 +51,7 @@ struct Arena
         return this.lifetime;
     }
 
-    void* allocate(size_t reqSize, size_t reqAlign = (void*).alignof) @safe @trusted 
+    void* allocate(size_t reqSize, size_t reqAlign = (void*).alignof) @safe @trusted
     {
         size_t aligned = (offset + reqAlign) & ~(reqAlign - 1);
 
@@ -92,11 +90,11 @@ struct Arena
         auto newBuf = cast(ubyte*) GC.malloc(newSize);
 
         if (newBuf is null)
-            getDiagEngine().invokeMacro(Macros.MEMORY_ALLOCATION_FAILURE);
+            throw new Exception("Null buffer");
 
         this.buffer = cast(ubyte*) memmove(newBuf, this.buffer, newSize);
 
         if (this.buffer is null)
-            getDiagEngine().fatal("Memory reallocation failed").thenExit();
+            throw new Exception("Null buffer");
     }
 }
