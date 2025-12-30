@@ -328,9 +328,88 @@ string diagTemplate(DiagCode code) pure nothrow @nogc @safe
 
 struct Diagnostic
 {
-   Severity severity;
-   DiagCode code;
-   SourceLoc location;
-   SourceSpan span;
+    Severity severity;
+    DiagCode code;
+    SourceLoc location;
+    SourceSpan span;
+    string message;
+    Diagnostic[] notes;
+
+    string toString() const @safe
+    {
+        auto result = appender!string;
+        formatTo(result, false);
+        return result[];
+    }
+
+    string toColorString() const @safe
+    {
+        auto result = appender!string;
+        formatTo(result, true);
+        return result[];
+    }
+
+    private void formatTo(ref Out output, bool useColor) const @safe
+    {
+        enum REST = "\\033[0m";
+        enum BOLD = "\\033[1m";
+        enum WHITE = "\\033[37;1m";
+
+        if (location.isValid)
+        {
+            if (useColor)
+                output ~= BOLD;
+            output ~= location.toString();
+            output ~= "; ";
+            if (useColor)
+                output ~= RESET;
+        }
+
+        if (useColor)
+        {
+            output ~= BOLD;
+            output ~= severityColor(this.severity);
+        }
+        output ~= severityToString(this.severity);
+        output ~= "; ";
+        if (useColor)
+            output ~= RESET;
+
+        if (useColor)
+            output ~= WHITE;
+        output ~= this.message;
+        if (useColor)
+            output ~= RESET;
+        output ~= '\n';
+
+        if (location.isValid && location.file !is null)
+        {
+            auto ctx = location.file.getContext(location, 0);
+            if (ctx.isValid)
+            {
+                if (useColor)
+                    output ~= ctx.toColorString();
+                else
+                    output ~= ctx.toString();
+
+            }
+
+        }
+
+        foreach (note; notes)
+            note.formatTo(output, useColor);
+    }
+
+    ref Diagnostic addNote(SourceLoc loc, string msg) return @safe
+    {
+        this.notes ~= Diagnostic(Severity.Note, DiagCode.Unknown, loc,
+                SourceSpan.invalid, msg, null);
+        return this;
+    }
+
+    ref Diagnostic addNote(string msg) return @safe
+    {
+        return addNote(SourceLoc.invalid(), msg);
+    }
 
 }
