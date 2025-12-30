@@ -188,7 +188,7 @@ struct StringPool
         return cast(uint)(cast(ulong)(this.entryCount) * 100.(this.hashMask + 1));
     }
 
-    private StringHanlde addNew(const(char)[] str, uint len, uint hash, uint slot) pure nothrow
+    private StringHandle addNew(const(char)[] str, uint len, uint hash, uint slot) pure nothrow
     {
         ensurePoolCapacity(len);
         ensureEntryCapacity();
@@ -242,6 +242,6 @@ struct StringPool
 
     private static uint computeHash(const(char)[] str) pure nothrow @nogc
     {
-        return fnv1Hash(str);
+        return fnv1Hash!(const(char)[])(str);
     }
 }
