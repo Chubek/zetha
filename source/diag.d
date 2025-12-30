@@ -1,11 +1,11 @@
 module zetha.diag;
 
-import zetha.strpool;
-import zetha.source;
+import zetha.strpool : StringHandle;
+import zetha.source : SourceLoc, SourceSpan;
 
 import std.array : appender, Appender;
 import std.format : format;
-import std.range : empty;
+import std.span : empty;
 
 enum Severity
 {
@@ -324,4 +324,13 @@ string diagTemplate(DiagCode code) pure nothrow @nogc @safe
     default:
         return "unknown error";
     }
+}
+
+struct Diagnostic
+{
+   Severity severity;
+   DiagCode code;
+   SourceLoc location;
+   SourceSpan span;
+
 }

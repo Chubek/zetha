@@ -36,12 +36,12 @@ struct SourcePos
     }
 }
 
-struct SourceRange
+struct SourceSpan
 {
     SourcePos start;
     SourcePos end;
 
-    enum SourceRange invalid = SourceRange(SourcePos.invalid, SourcePos.invalid);
+    enum SourceSpan invalid = SourceSpan(SourcePos.invalid, SourcePos.invalid);
 
     @property bool isValid() const pure nothrow @nogc @safe
     {
@@ -55,14 +55,14 @@ struct SourceRange
         return end.offset - start.offset;
     }
 
-    SourcceRange merge(const SourceRange other) const pure nothrow @nogc @safe
+    SourcceRange merge(const SourceSpan other) const pure nothrow @nogc @safe
     {
         if (!this.isValid)
             return other;
         if (!other.isValid)
             return this;
 
-        return SourceRange(SourcePos(start.offset < other.start.offset
+        return SourceSpan(SourcePos(start.offset < other.start.offset
                 ? start.offset : other.start.offset),
                 SourcePos(end.offset > other.end.offset ? end.offset : other.end.offset));
     }
@@ -206,13 +206,13 @@ class SourceFile
         return SourcePos(offset);
     }
 
-    string getText(SourceRange range) const pure nothrow @safe
+    string getText(SourceSpan span) const pure nothrow @safe
     {
-        if (!range.isValid)
+        if (!span.isValid)
             return null;
 
-        uint start = range.start.offset;
-        uint end = range.end.offset;
+        uint start = span.start.offset;
+        uint end = span.end.offset;
 
         if (start > this.length)
             return null;

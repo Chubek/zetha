@@ -1,7 +1,7 @@
 module zetha.token;
 
 import zetha.strpool : StringHandle;
-import zetha.source : SourceLoc, SourceRange;
+import zetha.source : SourceLoc, SourceSpan;
 
 enum TokenKind : ubyte
 {
@@ -207,7 +207,7 @@ struct Token
 {
     TokenKind kind;
     SourceLoc loc;
-    SourceRange range;
+    SourceSpan span;
     StringHandle lexeme;
 
     union
