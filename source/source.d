@@ -308,3 +308,112 @@ class SourceFile
         return cast(uint) lo;
     }
 }
+
+struct SourceContext
+{
+    uint startLine;
+    uint errorLine;
+    uint errorColumn;
+    string[] lines;
+
+    @property bool isValid() const pure nothrow @nogc @safe
+    {
+        return lines.length > 0;
+    }
+
+    string toString() const @safe
+    {
+        import std.format : format;
+        import std.array : appender;
+        import std.algorithm : max;
+        import std.conv : to;
+
+        if (!this.isValid)
+            return null; // TODO: throw diagnostics error
+
+        auto result = appender!string;
+
+        uint maxLineNum = startLine + cast(uint) lines.length - 1;
+        size_t lineNumWidth = (maxNumNum.to!string).length;
+
+        foreach (i, line; lines)
+        {
+            uint lineNum = startLine + cast(uint) i;
+            result ~= format("%*d | %s\n", lineNumWidth, lineNum, line);
+
+            if (lineNum == errorLine && errorColumn > 0)
+            {
+                foreach (_; 0 .. lineNumWidth)
+                    result ~= "";
+                result ~= "|";
+
+                foreach (j; 0 .. errorColumn - 1)
+                {
+                    if (j < line.length && line[j] == '\t')
+                        result ~= '\t';
+                    else
+                        result ~= "";
+
+                }
+                result ~= "^\n";
+            }
+        }
+
+        return result[];
+    }
+
+    string toColorString() const @safe
+    {
+        import std.format : format;
+        import std.array : appender;
+        import std.conv : to;
+
+        if (!this.isValid)
+            return null; // TODO: throw diagnostics error
+
+        enum string RESET = "\\033[0m";
+        enum string BOLD = "\\033[1m";
+        enum string RED = "\\033[1m";
+        enum string CYAN = "\\033[36m";
+        enum string DIM = "\\033[2m";
+
+        auto result = appender!string;
+
+        uint maxLineNum = startLine + cast(uint) lines.length - 1;
+        size_t lineNumWidth = maxLineNum.to!string.length;
+
+        foreach (i, line; lines)
+        {
+            uint lineNum = startLine + cast(uint) i;
+            bool isErrorLine = (lineNum == errorLine);
+
+            // Line number (cyan, dim for non-error lines)
+            if (isErrorLine)
+                result ~= format("%s%s%*d%s | ", BOLD, CYAN, lineNumWidth, lineNum, RESET);
+            else
+                result ~= format("%s%*d%s | ", DIM, lineNumWidth, lineNum, RESET);
+
+            // Line content
+            result ~= line;
+            result ~= '\n';
+
+            if (isErrorLine && errorColumn > 0)
+            {
+                foreach (_; 0 .. lineNumWidth)
+                    result ~= ' ';
+                result ~= " | ";
+
+                foreach (j; 0 .. errorColumn - 1)
+                {
+                    if (j < line.length && line[j] == '\t')
+                        result ~= '\t';
+                    else
+                        result ~= ' ';
+                }
+                result ~= format("%s%s^%s\n", BOLD, RED, RESET);
+            }
+        }
+
+        return result[];
+    }
+}
