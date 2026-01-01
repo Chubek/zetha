@@ -141,6 +141,11 @@ abstract class CType
         return this.kind = TypeKind.BOOL;
     }
 
+    bool isFunction() const pure nothrow @nogc @safe
+    {
+	return this.kind == TypeKind.FUNCTION;
+    }
+
     bool isArithmetic() const pure nothrow @nogc @safe
     {
         return this.isIntegral() || this.isReal();
@@ -164,6 +169,9 @@ abstract class CType
         return true;
     }
 
+    // TODO: these methods must be relegated to their own class
+
+/*
     CType pointsToType() pure nothrow @safe
     {
         if (auto pt = cast(PointerType) this)
@@ -184,9 +192,16 @@ abstract class CType
             return ft.retType;
         return null;
     }
+*/
+    @property size_t size() const pure @safe
+    {
+	return sizeImpl();
+    }
 
-    abstract size_t size() const pure nothrow @safe;
-    abstract size_t alignment() const pure nothrow @safe;
+    @property ushort alignment() const pure @safe
+    {
+	return alignmentImpl();
+    }
 
     CType withQualifiers(TypeQualifier addQual) pure @safe
     {
@@ -231,6 +246,9 @@ abstract class CType
     {
         return promoteImpl(other);
     }
+
+    protected abstract size_t sizeImpl() const pure nothrow @safe;
+    protected abstract ushort alignmentImpl() const pure nothrow @safe;
 
     protected abstract CType withQualImpl(TypeQual newQual) pure @safe;
     protected abstract string toStringWithNameImpl(string name) pure @safe;
@@ -287,6 +305,11 @@ class UnionType : CType
 }
 
 class TypedefType : CType
+{
+    // TODO
+}
+
+class FunctionType : CType
 {
     // TODO
 }
