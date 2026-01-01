@@ -371,11 +371,11 @@ struct SourceContext
         if (!this.isValid)
             return null; // TODO: throw diagnostics error
 
-        enum string RESET = "\\033[0m";
-        enum string BOLD = "\\033[1m";
-        enum string RED = "\\033[1m";
-        enum string CYAN = "\\033[36m";
-        enum string DIM = "\\033[2m";
+        enum RESET = "\\033[0m";
+        enum BOLD = "\\033[1m";
+        enum RED = "\\033[1m";
+        enum CYAN = "\\033[36m";
+        enum DIM = "\\033[2m";
 
         auto result = appender!string;
 
