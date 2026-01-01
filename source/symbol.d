@@ -46,7 +46,7 @@ enum StorageClass
     TYPEDEF,
 }
 
-struct SymbolAttributes
+struct SymbolComputedAttrs
 {
     bool addressTaken;
     bool escapes;
@@ -75,16 +75,16 @@ struct SymbolAttributes
 
 struct Symbol
 {
-    StringHandle name;
-    SymbolKind kind;
-    SymbolAttributes attrs;
-    CType type;
-    StorageClass storage;
-    SymbolFlags flags;
-    SourceLoc declLoc;
-    SourceLoc defnLoc;
-    Symbol enclosingFunc;
-    int scopeLevel;
+    private StringHandle name;
+    private SymbolKind kind;
+    private Set!SymbolComputedAttrs computedAttrs;
+    private CType type;
+    private StorageClass storage;
+    private SymbolFlags flags;
+    private SourceLoc declLoc;
+    private SourceLoc defnLoc;
+    private Symbol enclosingFunc;
+    private int scopeLevel;
 
     union
     {
@@ -97,6 +97,7 @@ struct Symbol
     {
         this.name = name;
         this.kind = kind;
+        this.computedAttrs = [];
         this.storage = storage;
         this.flags = SymbolFlags.NONE;
         this.declLoc = SourceLoc.uninit();
@@ -146,6 +147,16 @@ struct Symbol
     void setEnclosingFunc(Symbol func) @safe
     {
         this.enclosingFunc = func;
+    }
+
+    void addComputedAttr(SymbolComputedAttr attr) @safe
+    {
+        this.computedAttrs.add(attr);
+    }
+
+    void removeComputedAttr(SymbolComputedAttr attr) @safe
+    {
+        this.computedAttrs.remove(attr);
     }
 
     bool isAuto() const pure nothrow @nogc @safe
