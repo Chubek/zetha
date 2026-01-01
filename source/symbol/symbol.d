@@ -47,7 +47,7 @@ struct Symbol
         this._id = id;
         this._kind = kind;
         this._name = name;
-        this._deSite = defSite;
+        this._defSite = defSite;
         this._type = type;
         this._computedAttrs = Set.init;
     }
