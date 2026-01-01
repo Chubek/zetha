@@ -71,6 +71,11 @@ abstract class CType
         return this.tyyQual;
     }
 
+    string toString() const pure nothrow @nogc @safe
+    {
+	return this.toStringImpl();
+    }
+
     bool isConst() const pure nothrow @nogc @safe
     {
         return this.qualifier & TypeQualifier.CONST;
@@ -251,6 +256,7 @@ abstract class CType
     protected abstract ushort alignmentImpl() const pure nothrow @safe;
 
     protected abstract CType withQualImpl(TypeQual newQual) pure @safe;
+    protected abstract string toStringImpl(); const pure @safe;
     protected abstract string toStringWithNameImpl(string name) pure @safe;
     protected abstract bool isCompatibleWithImpl(const CType other) const pure nothrow @safe;
     protected abstract bool isConvertibleToImpl(const CType other) const pure nothrow @safe;
