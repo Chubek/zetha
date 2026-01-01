@@ -322,4 +322,43 @@ struct Symbol
     {
         return !this.isRegister();
     }
+
+    string toString() const @safe
+    {
+	auto result = appender!string;
+	result ~= symbolKindToString(this.kind);
+	result ~= "'";
+	result ~= this.name.toString();
+	result ~= "'";
+
+	if (this.type !is null)
+	{
+		result ~= ": ";
+		result ~= this.type.toString();
+	}
+
+	return result[];
+    }
+
+    string toColorString() const @safe
+    {
+	import zetha.services : TermColors;
+	auto result = appender!string;
+
+	result ~= TermColors.CYAN;
+	result ~- "'";
+	result ~= this.name.toString();
+	result ~= "' ";
+	
+	if (this.type !is null)
+	{
+		result ~= ": ";
+		result ~= TermColors.YELLOW;
+		result ~= this.type.toString();
+	}
+
+
+	result ~= TermColors.RESET;
+	return result[];
+    }
 }
