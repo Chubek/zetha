@@ -1,6 +1,6 @@
 module zetha.source;
 
-import zetha.strpool : StringHandle, getStrTbl;
+import zetha.strpool : StringHandle, getStrPool;
 import std.typecons : Nullable;
 
 struct SourcePos
@@ -137,7 +137,7 @@ class SourceFile
 
     this(string filename, string content)
     {
-        this(getStrTbl().instance.intern(filename), content);
+        this(getStrPool().instance.intern(filename), content);
     }
 
     static SourceFile fromFile(string path) @safe
@@ -415,5 +415,63 @@ struct SourceContext
         }
 
         return result[];
+    }
+}
+
+class SourceFileManager
+{
+    private SourceFile[StringHandle] files;
+    private SourceFile[] fileList;
+
+    SourceFile getOrLoad(string path) @safe
+    {
+        auto fileNameHandle = getStrPool().intern(path);
+
+        if (auto existing = fileNameHandle in this.files)
+            return *existing;
+
+        auto file = Sourcefile.fromFile(path);
+        if (file !is null)
+        {
+            this.files[fileNameHandle] = file;
+            this.fileList ~= file;
+        }
+
+        return file;
+    }
+
+    SourceFile addFromString(string name, string content) @safe
+    {
+        auto fileNameHandle = getStrPool().intern(name);
+
+        auto file = SourceFile.fromString(name, content);
+        this.files[fileNameHandle] = file;
+        this.fileList ~= file;
+
+        return file;
+    }
+
+    SourceFile lookup(string name) @safe
+    {
+        auto fileNameHandle = getStrPool().intern(name);
+        if (auto file = fileNameHandle in this.files)
+            return *file;
+        return null;
+    }
+
+    @property size_t length() const pure nothrow @nogc @safe
+    {
+        return this.fileList.length;
+    }
+
+    auto byFile() pure nothrow @nogc @safe
+    {
+        return this.fileList[];
+    }
+
+    void clear() @safe
+    {
+        this.files.clear();
+        this.fileList.length = 0;
     }
 }
