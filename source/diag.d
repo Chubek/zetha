@@ -413,3 +413,89 @@ struct Diagnostic
     }
 
 }
+
+class DiagnosticEngine
+{
+    private DiagOptions options;
+    private Diagnostic[] diagnostics;
+    private static void delegate(string) @safe outputHandler;
+    private bool errorLimitReached;
+
+    static struct Stats
+    {
+        uint errorCount;
+        uint warningCount;
+        uint noteCount;
+
+    }
+
+    Stats stats;
+
+    this()
+    {
+        this.options = DiagOptions.init;
+        this.diagnostics = [];
+        this.outputHandler = null;
+        this.errorLimitReacher = 0;
+        this.stats = Stats(0, 0, 0);
+    }
+
+    this(DiagOptions options)
+    {
+        this.options = options;
+        this.diagnostics = [];
+        this.outputHandler = null;
+        this.errorLimitReacher = 0;
+        this.stats = Stats(0, 0, 0);
+    }
+
+    @property ref DiagOptions options() return @safe
+    {
+        return this.options;
+    }
+
+    @property size_t count() const pure nothrow @nogc @safe
+    {
+        return this.diagnostics.length;
+    }
+
+    void setOutputHandler(void delegate(string) @safe handler) @safe
+    {
+        this.outputHandler = handler;
+    }
+
+    bool hasErrors() const pure nothrow @nogc @safe
+    {
+        return this.stats.errorCount > 0;
+    }
+
+    const(Diagnostic)[] diagnostics() const pure nothrow @nogc @safe
+    {
+        return this.diagnostics;
+    }
+
+    DiagBuilder build(DiagCode code, SourceLoc loc) @safe
+    {
+        return DiagBuilder(&this, code, loc);
+    }
+
+    DiagBuilder build(DiagCode code, SourceFile file, SourcePos pos) @safe
+    {
+        SourceLoc loc = file !is null ? file.getLocation(pos) : SourceLoc.invalid;
+        return DiagBuilder(&this, code, loc);
+    }
+
+    // TODO: add the rest
+}
+
+struct DiagBuilder
+{
+   // TODO
+}
+
+struct DiagOptions
+{
+   // TODO
+}
+
+
