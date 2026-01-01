@@ -66,7 +66,7 @@ enum TokenKind : ubyte
     STAR,
     SLASH,
     PERCENT,
-    AMPR,
+    AMPER,
     PIPE,
     CARET,
     BANG,
@@ -83,7 +83,7 @@ enum TokenKind : ubyte
     GREATER_EQUAL,
     EQUAL_EQUAL,
     BANG_EQUAL,
-    AMPR_AMPR,
+    AMPER_AMPER,
     PIPE_PIPE,
 
     PLUS_ASSIGN,
@@ -91,8 +91,8 @@ enum TokenKind : ubyte
     STAR_ASSIGN,
     SLASH_ASSIGN,
     PERCENT_ASSIGN,
-    AMPR_ASSIGN,
-    AMPR_AMPR_ASSIGN,
+    AMPER_ASSIGN,
+    AMPER_AMPER_ASSIGN,
     PIPE_ASSIGN,
     PIPE_PIPE_ASSIGN,
     CARET_ASSIGN,
@@ -154,8 +154,8 @@ bool isAssignmentOp(TokenKind kind) pure nothrow @nogc @safe
     case TokenKind.STAR_ASSIGN:
     case TokenKind.SLASH_ASSIGN:
     case TokenKind.PERCENT_ASSIGN:
-    case TokenKind.AMPR_ASSIGN:
-    case TokenKind.AMPR_AMPR_ASSIGN:
+    case TokenKind.AMPER_ASSIGN:
+    case TokenKind.AMPER_AMPER_ASSIGN:
     case TokenKind.PIPE_ASSIGN:
     case TokenKind.PIPE_PIPE_ASSIGN:
     case TokenKind.CARET_ASSIGN:
@@ -171,7 +171,7 @@ bool isUnaryOp(TokenKind kind) pure nothrow @nogc @safe
 {
     final switch (kind)
     {
-    case TokenKind.AMPR:
+    case TokenKind.AMPER:
     case TokenKind.STAR:
     case TokenKind.PLUS:
     case TokenKind.MINUS:
@@ -179,6 +179,41 @@ bool isUnaryOp(TokenKind kind) pure nothrow @nogc @safe
     case TokenKind.PLUS_PLUS:
     case TokenKind.MINUS_MINUS:
     case TokenKind.SIZEOF:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isBinaryOp(TokenKind kind) pure nothrow @nogc @safe
+{
+    final switch (kind)
+    {
+    case TokenKind.PLUS:
+    case TokenKind.MINUS:
+    case TokenKind.STAR:
+    case TokenKind.SLASH:
+    case TokenKind.PERCENT:
+    case TokenKind.GREATER_GREATER:
+    case TokenKind.LESSER_LESSER:
+    case TokenKind.PIPE_PIPE:
+    case TokenKind.AMPER_AMPER:
+    case TokenKind.AMPER:
+    case TokenKind.PIPE:
+    case TokenKind.CARET:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isMemoryOp(TokenKind kind) pure nothrow @nogc @safe
+{
+    final switch (kind)
+    {
+    case TokenKind.STAR:
+    case TokenKind.AMPER:
+    case TokenKind.ARROW:
         return true;
     default:
         return false;
@@ -222,7 +257,7 @@ struct Token
     {
         IntSuffix intSuffix;
         RealSuffix realSuffix;
-	bool wideChar;
+        bool wideChar;
     }
 
     @property isValid() const pure nothrow @nogc @safe
@@ -236,7 +271,7 @@ struct Token
     }
 }
 
-public immutable TokenKind[string] gKeywordsTable;
+private immutable TokenKind[string] pKeywordsTable;
 
 shared static this()
 {
@@ -274,4 +309,9 @@ shared static this()
         "volatile": TokenKind.KW_VOLATILE,
         "while": TokenKind.KW_WHILE,
     ];
+}
+
+TokenKind[string] getKeywordsTable() pure const @nogc @safe @trusted
+{
+    return pKeywordsTable;
 }
