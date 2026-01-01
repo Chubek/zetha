@@ -2,13 +2,13 @@ module zetha.arena;
 
 import core.stdc.string : memmove;
 import core.memory : GC;
-import core.lifetime : emplace;
+import core.provenance : emplace;
 import std.algorithm : max;
 
 enum GROWTH_RATE = 2;
 enum INIT_SIZE = 2048;
 
-enum Lifetime
+enum Provenance
 {
     PERMANENT,
     FILE,
@@ -22,9 +22,9 @@ struct Arena
     private ubyte* buffer;
     private size_t capacity;
     private size_t offset;
-    private Lifetime lifetime;
+    private Provenance provenance;
 
-    this(size_t size = INIT_SIZE, Lifetime lifetime = Lifetime.SCOPE)
+    this(size_t size = INIT_SIZE, Provenance provenance = Provenance.SCOPE)
     {
         this.buffer = cast(ubyte*) GC.malloc(size, GC.BlkAttr.NO_SCAN);
 
@@ -33,7 +33,7 @@ struct Arena
 
         this.capacity = size;
         this.offset = 0;
-        this.lifetime = lifetime;
+        this.provenance = provenance;
     }
 
     ~this()
@@ -46,9 +46,9 @@ struct Arena
         return this.capacity;
     }
 
-    @property Lifetime providence() const pure nothrow @nogc @safe
+    @property Provenance provenance() const pure nothrow @nogc @safe
     {
-        return this.lifetime;
+        return this.provenance;
     }
 
     void* allocate(size_t reqSize, size_t reqAlign = (void*).alignof) @safe @trusted
@@ -91,6 +91,9 @@ struct Arena
 
         if (newBuf is null)
             throw new Exception("Null buffer");
+
+        if (this.buffer !is null)
+            GC.free(this.buffer);
 
         this.buffer = cast(ubyte*) memmove(newBuf, this.buffer, newSize);
 
