@@ -1,6 +1,6 @@
 module zetha.ctype;
 
-import zetha.intrtbl : StringHandle;
+import zetha.strpool : StringHandle;
 
 enum MAX_REPR_SPECS = 4;
 
