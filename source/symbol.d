@@ -325,40 +325,244 @@ struct Symbol
 
     string toString() const @safe
     {
-	auto result = appender!string;
-	result ~= symbolKindToString(this.kind);
-	result ~= "'";
-	result ~= this.name.toString();
-	result ~= "'";
+        auto result = appender!string;
+        result ~= symbolKindToString(this.kind);
+        result ~= "'";
+        result ~= this.name.toString();
+        result ~= "'";
 
-	if (this.type !is null)
-	{
-		result ~= ": ";
-		result ~= this.type.toString();
-	}
+        if (this.type !is null)
+        {
+            result ~= ": ";
+            result ~= this.type.toString();
+        }
 
-	return result[];
+        return result[];
     }
 
     string toColorString() const @safe
     {
-	import zetha.services : TermColors;
-	auto result = appender!string;
+        import zetha.services : TermColors;
 
-	result ~= TermColors.CYAN;
-	result ~- "'";
-	result ~= this.name.toString();
-	result ~= "' ";
-	
-	if (this.type !is null)
-	{
-		result ~= ": ";
-		result ~= TermColors.YELLOW;
-		result ~= this.type.toString();
-	}
+        auto result = appender!string;
 
+        result ~= TermColors.CYAN;
+        result ~ -"'";
+        result ~= this.name.toString();
+        result ~= "' ";
 
-	result ~= TermColors.RESET;
-	return result[];
+        if (this.type !is null)
+        {
+            result ~= ": ";
+            result ~= TermColors.YELLOW;
+            result ~= this.type.toString();
+        }
+
+        result ~= TermColors.RESET;
+        return result[];
+    }
+}
+
+enum ScopeKind
+{
+    FILE,
+    FUNCTION,
+    BLOCK,
+    PROTOTYPE,
+    FIELD,
+}
+
+class Scope
+{
+    private ScopeKind kind;
+    private Scope parent;
+    private uint level;
+
+    private Symbol[StringHandle] symbols;
+    private Symbol[StringHandle] tags;
+    private symbol[StringHandle] labels;
+    private Symbol closure;
+
+    this(SopeKind kind, ScopeParent = null)
+    {
+        this.kind = kind;
+        this.parent = parent;
+        this.level = parent is null ? 0 : parent.level + 1;
+    }
+
+    @property size_t symbolCount() const pure nothrow @nogc @safe
+    {
+        return this.symbols.length;
+    }
+
+    @property ScopeKind kind() const pure nothrow @nogc @safe
+    {
+        return this.kind;
+    }
+
+    @property Scope parent() const pure nothrow @nogc @safe
+    {
+        return this.parent;
+    }
+
+    @property uint level() const pure nothrow @nogc @safe
+    {
+        return this.level;
+    }
+
+    @property Scope closure() const pure nothrow @nogc @safe
+    {
+        return this.closure;
+    }
+
+    bool isFileScope() const pure nothrow @nogc @safe
+    {
+        return this.kind == ScopeKind.FILE;
+    }
+
+    bool isFunctionScope() const pure nothrow @nogc @safe
+    {
+        return this.kind == ScopeKind.FUNCTION;
+    }
+
+    bool isBlockScope() const pure nothrow @nogc @safe
+    {
+        return this.kind == ScopeKind.BLOCK;
+    }
+
+    bool isPrototypeScope() const pure nothrow @nogc @safe
+    {
+        return this.kind == ScopeKind.PROTOTYPE;
+    }
+
+    bool isFieldScope() const pure nothrow @nogc @safe
+    {
+        return this.kind == ScopeKind.FIELD;
+    }
+
+    void setClosure(Symbol closure) pure nothrow @safe
+    {
+        this.closure = closure;
+    }
+
+    Symbol declare(Symbol sym) pure nothrow @safe
+    {
+        if (sym.isFileScope() || this.isFileScope())
+            sym.setFlag(SymbolFlags.FILE_SCOPE);
+
+        if (auto existing = sym.name in this.symbols)
+            return *existing;
+
+        this.symbols[sym.name] = sym;
+        return sym;
+    }
+
+    Symbol declareTag(Symbol sym) pure nothrow @safe
+    {
+        sym.scopeLevel = this.level;
+
+        if (auto existing = sym.name in this.tags)
+            return *existing;
+
+        this.tags[sym.name] = sym;
+        return sym;
+    }
+
+    Symbol declareLabel(Symbol sym) pure nothrow @safe
+    {
+        sym.scopeLevel = this.level;
+
+        if (auto existing = sym.name in this.labels)
+            return *existing;
+
+        this.labels[sym.name] = sym;
+        return sym;
+    }
+
+    Symbol lookupLocal(StringHandle name) pure nothrow @safe
+    {
+        if (auto sym = name in this.symbols)
+            return *sym;
+        return null;
+    }
+
+    Symbol lookupLocalTag(StringHandle name) pure nothrow @safe
+    {
+        if (auto sym = name in this.tags)
+            return *sym;
+        return null;
+    }
+
+    Symbol lookupLocalLabel(StringHandle name) pure nothrow @safe
+    {
+        if (auto sym = name in this.labels)
+            return *sym;
+        return null;
+    }
+
+    Symbol lookup(StringHandle name) pure nothrow @safe
+    {
+        if (auto sym = name in this.symbols)
+            return *sym;
+
+        if (this.parent !is null)
+            return this.parent.lookup(name);
+
+        return null;
+    }
+
+    Symbol lookupTag(StringHandle name) pure nothrow @safe
+    {
+        if (auto sym = name in this.tags)
+            return *sym;
+
+        if (this.parent !is null)
+            return this.parent.lookupTag(name);
+
+        return null;
+    }
+
+    Symbol lookupLabel(StringHandle name) pure nothrow @safe
+    {
+        if (auto sym = name in this.labels)
+            return *sym;
+
+        if (this.parent !is null)
+            return this.parent.lookupLabel(name);
+
+        return null;
+    }
+
+    auto symbols() pure nothrow @safe
+    {
+        return this.symbols.byValue;
+    }
+
+    auto tags() pure nothrow @safe
+    {
+        return this.tags.byValue;
+    }
+
+    auto labels() pure nothrow @safe
+    {
+        return this.labels.byValue;
+    }
+
+    Scope functionScope() pure nothrow @safe
+    {
+        if (this.isFunctionScope())
+            return this;
+        if (this.parent !is null)
+            return this.parent.functionScope();
+        return null;
+    }
+
+    Scope fileScope() pure nothrow @safe
+    {
+        if (this.isFileScope())
+            return this;
+        if (this.parent !is null)
+            return this.parent.fileScope();
+        return null;
     }
 }
