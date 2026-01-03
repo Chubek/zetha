@@ -2,6 +2,7 @@ module zetha.infra.arena;
 
 import zetha.infra.config : Config;
 import zetha.infra.strpool : StringHandle;
+import zetha.infra.abstyy : Set, Map;
 
 import std.lifetime : emplace;
 import core.stdc.string : memmove;
