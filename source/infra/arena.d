@@ -15,14 +15,6 @@ enum MemoryProvenance
     SCOPE,
 }
 
-template MemoryHandle(T, alias allocFn)
-{
-    T* allocate(size_t numUnits)
-    {
-        return allocFn!T(numUnits);
-    }
-}
-
 struct Arena
 {
     private void* _memory;
