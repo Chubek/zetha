@@ -91,7 +91,7 @@ struct Arena
     {
         size_t newSize = roundUp(this.capacity * 2);
         void* newMemory = GC.malloc(newSize);
-        memmove(newMemory, this._memory, this.offset);
+        memmove(cast(const(void)*) newMemory, cast(const(void)*) this._memory, this.offset);
         GC.free(this._memory);
         this._memory = newMemory;
         this._capacity = newSize;
