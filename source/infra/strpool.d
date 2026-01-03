@@ -12,10 +12,12 @@ struct StringHandle
 {
     private size_t _id;
     private static size_t _idCounter = 0;
+    private string _externCache;
 
     this()
     {
         this._id = this._idCounter++;
+        this._externCache = null;
     }
 
     @property size_t id() const pure nothrow @safe @trusted
@@ -23,13 +25,23 @@ struct StringHandle
         return this._id;
     }
 
+    @property string repr() const pure nothrow @safe @trusted
+    {
+        return this._externCache;
+    }
+
     string toString() const pure @safe @trusted
     {
+        if (this._externCache !is null)
+            return this._externCache;
 
         auto underlying = gStringPool.externString(this.id);
         enforce(underlying !is null, "String externing failed");
-        return to!string(underlying);
+        this._externCache = to!string(underlying);
+        return this._externCache;
     }
+
+    alias getExternRepr = toString;
 
     size_t toHash() const pure @safe @trusted
     {
@@ -41,7 +53,22 @@ struct StringHandle
         return this._id == other._id;
     }
 
-    // TODO: add operator methods
+    int opCmp(const StringHandle other) const pure nothrow @safe @trusted
+    {
+        if (this.repr is null)
+            this.getExternRepr();
+
+        if (other.repr is null)
+            other.getExternRepr();
+
+        if (this.repr[0] > other.repr[0])
+            return 1;
+        if (this.repr[0] < other.repr[0])
+            return -1;
+
+        return 0;
+
+    }
 }
 
 class StringPool
