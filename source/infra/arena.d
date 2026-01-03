@@ -106,9 +106,9 @@ synchronized shared static Stack!Arena gScopeArena;
 static this()
 {
     gPermanentArena = Arena(Config.PermanentArenaSize);
-    gTransUnitArena = new Map!(TransUnit, Arena).init;
-    gFunctionArena = new Map!(StringHandle, Arena).init;
-    gScopeArena = new Stack!(Arena).init;
+    gTransUnitArena = new Map!(TransUnit, Arena);
+    gFunctionArena = new Map!(StringHandle, Arena);
+    gScopeArena = new Stack!(Arena);
 }
 
 T* allocatePermanently(T, Args...)(size_t numUnits, Args ctors)
