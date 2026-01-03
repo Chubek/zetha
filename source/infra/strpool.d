@@ -4,6 +4,7 @@ import zetha.infra.config : Config;
 import zetha.infra.arena : allocatePermanently;
 
 import core.stdc.string : memmove;
+import core.atomic : atomicFetchAdd;
 import std.traits : isSomeString;
 import std.exception : enforce;
 import std.conv : to;
@@ -11,12 +12,13 @@ import std.conv : to;
 struct StringHandle
 {
     private size_t _id;
-    private static size_t _idCounter = 0;
+    private shared size_t _idCounter = 0;
     private string _externCache;
 
     this()
     {
-        this._id = this._idCounter++;
+        this._id = this._idCounter;
+        this._idCounter = atomicFetchAdd(this._idCounter, 1);
         this._externCache = null;
     }
 
@@ -30,7 +32,7 @@ struct StringHandle
         return this._externCache;
     }
 
-    string toString() const pure @safe @trusted
+    string toString() @safe @trusted
     {
         if (this._externCache !is null)
             return this._externCache;
@@ -61,12 +63,9 @@ struct StringHandle
         if (other.repr is null)
             other.getExternRepr();
 
-        if (this.repr[0] > other.repr[0])
-            return 1;
-        if (this.repr[0] < other.repr[0])
-            return -1;
+        import std.algorithm.cmp;
 
-        return 0;
+        return cmp(this.repr, other.repr);
 
     }
 }
@@ -77,6 +76,8 @@ class StringPool
     private size_t _capacity;
     private size_t _used;
     private size_t[] _offsets;
+    private size_t[] _lengths;
+    private size_t[string] _strToID;
 
     this(size_t capacity)
     {
@@ -97,7 +98,7 @@ class StringPool
         return this._used;
     }
 
-    StringHandle internString(immutable(char)* str, size_t length) @safe @trusted
+    StringHandle internString(immutable(char)* str, size_t len) @safe @trusted
     {
         enforce(str !is null, "Cannot intern null pointer");
         return internStringImpl(str, len);
@@ -111,25 +112,44 @@ class StringPool
 
     private StringHandle internStringImpl(const(immutable(char)*) data, size_t len) @safe
     {
+        if (auto exists = this.handleDedup(data, len))
+            return *exists;
+
         size_t requiredSpace = len + 1;
         enforce(this.used + requiredSpace <= this.capacity, "String Pool capacity exceeded");
 
         size_t offset = this.used;
-        this.offsets ~= offset;
+        this._offsets ~= offset;
 
-        memmove(cast(void*)(this._pool + offset), cast(const(void)*) data, len);
-        (this._pool + offset)[len] = '\0';
+        char* mutablePool = cast(char*) this._pool;
+        memmove(cast(void*)(mutablePool + offset), cast(const(void)*) data, len);
+        (mutablePool + offset)[len] = '\0';
 
         this._used += requiredSpace;
+        this._lengths ~= len;
 
-        return StringHandle();
+        auto handle = StringHandle();
+        this._strToID[handle.id] = data[0 .. len].idup;
+        return handle;
+    }
+
+    private StringHandle handleDedup(const(immutable(char)*) data, size_t len)
+    {
+        string candidate = data[0 .. len].idup;
+
+        if (auto existing = candidate in this._strToID)
+            return StringHandle(*existing);
+
+        return null;
     }
 
     string externString(size_t id) const pure @safe @trusted
     {
         if (id >= this.offsets.length)
             return null;
-        return this._pool + this._offsets[id];
+        size_t offset = this._offsets[id];
+        size_t length = this._lengths[id];
+        return to!string(this._pool[offset .. offset + length]);
     }
 }
 
@@ -141,6 +161,11 @@ static this()
 }
 
 StringHandle internDString(string str)
+{
+    return gStringPool.internString(str);
+}
+
+StringHandle internCString(immutable(char)[] str)
 {
     return gStringPool.internString(str);
 }
