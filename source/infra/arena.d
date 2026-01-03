@@ -98,12 +98,14 @@ struct Arena
 }
 
 synchronized shared static Arena gPermanentArena;
+synchronized shared static Map!(TransUnit, Arena) gTransUnitArena;
 synchronized shared static Map!(StringHandle, Arena) gFunctionArena;
 synchronized shared static Stack!Arena gScopeArena;
 
 static this()
 {
     gPermanentArena = Arena(Config.PermanentArenaSize);
+    gTransUnitArena = new Map!(TransUnit, Arena).init;
     gFunctionArena = new Map!(StringHandle, Arena).init;
     gScopeArena = new Stack!(Arena).init;
 }
@@ -111,6 +113,11 @@ static this()
 T* allocatePermanently(T, Args...)(size_t numUnits, Args ctors)
 {
     return gPermanentArena.allocateSafely!T(numUnits, ctors);
+}
+
+T* allocateForTransUnit(T, Args...)(TransUnit tu, size_t numUnits, Args ctors)
+{
+    return gTransUnitArena[tu].allocateSafely(numUnits, ctors);
 }
 
 T* allocateForFunction(T, Args...)(StringHandle funcName, size_t numUnits, Args ctors)
