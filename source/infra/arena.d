@@ -25,6 +25,7 @@ struct Arena
 
     this(size_t capacity, MemoryProvedance provedance = MemoryProvedance.SCOPE)
     {
+        assert((capacity & (capacity - 1)) == 0, "Capacity must be power of 2");
         this._capacity = capacity;
         this._offset = 0;
         this._provedance = provedance;
@@ -51,14 +52,24 @@ struct Arena
         return this._provedance;
     }
 
+    @property float ratio() pure const nothrow @safe
+    {
+        return (cast(float) this.offset) / (cast(float) this.capacity);
+    }
+
     size_t roundUp(size_t reqSize) pure const nothrow @safe
     {
         return (reqSize + (this._align) - 1) & ~(this._align - 1);
     }
 
+    void reset() nothrow @safe
+    {
+        this._offset = 0;
+    }
+
     void* allocate(size_t unitSize, size_t numUnit) nothrow @safe @trusted
     {
-        if ((this.offset / this.capacity) >= this._resizeRatio)
+        if (this.ratio >= this._resizeRatio)
             growArena();
 
         auto reqSizeAligned = roundUp(unitSize * numUnit);
@@ -79,20 +90,21 @@ struct Arena
     {
         size_t newSize = roundUp(this.capacity * 2);
         void* newMemory = GC.malloc(newSize);
-
-        this._memory = memmove(newMemory, this._memory, this.offset);
+        memmove(newMemory, this._memory, this.offset);
+        GC.free(this._memory);
+        this._memory = newMemory;
         this._capacity = newSize;
     }
 }
 
-shared static Arena gPermanentArena;
-shared static Map!(StringHandle, Arena) gFunctionArena;
-shared static Stack!Arena gScopeArena;
+synchronized shared static Arena gPermanentArena;
+synchronized shared static Map!(StringHandle, Arena) gFunctionArena;
+synchronized shared static Stack!Arena gScopeArena;
 
 static this()
 {
     gPermanentArena = Arena(Config.PermanentArenaSize);
-    gFunctionArena = new Map!(StringHandle, Arena);
+    gFunctionArena = new Map!(StringHandle, Arena).init;
     gScopeArena = new Stack!(Arena).init;
 }
 
@@ -113,7 +125,7 @@ T* allocateForScope(T, Args...)(size_t numUnits, Args ctors)
 
 void pushScopeArena() @safe @trusted
 {
-    gScopeArena.pushBlankFront();
+    gScopeArena.pushFreshFront();
 }
 
 void popScopeArena() @safe @trusted
