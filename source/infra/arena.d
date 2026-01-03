@@ -22,14 +22,14 @@ struct Arena
     private size_t _offset;
     private size_t _align = Config.MemAlign;
     private size_t _resizeRatio = Config.ResizeRatio;
-    private MemoryProvenance _provedance;
+    private MemoryProvenance _provanence;
 
-    this(size_t capacity, MemoryProvenance provedance = MemoryProvenance.SCOPE)
+    this(size_t capacity, MemoryProvenance provanence = MemoryProvenance.SCOPE)
     {
         assert((capacity & (capacity - 1)) == 0, "Capacity must be power of 2");
         this._capacity = capacity;
         this._offset = 0;
-        this._provedance = provedance;
+        this._provanence = provanence;
         this._memory = cast(void*) GC.malloc(capacity);
     }
 
@@ -48,9 +48,9 @@ struct Arena
         return this._offset;
     }
 
-    @property MemoryProvenance provedance() pure const nothrow @safe
+    @property MemoryProvenance provanence() pure const nothrow @safe
     {
-        return this._provedance;
+        return this._provanence;
     }
 
     @property float ratio() pure const nothrow @safe
