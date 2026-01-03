@@ -8,7 +8,7 @@ import std.lifetime : emplace;
 import core.stdc.string : memmove;
 import core.memory : GC;
 
-enum MemoryProvedance
+enum MemoryProvenance
 {
     PERMANENT,
     FUNCTION,
@@ -22,9 +22,9 @@ struct Arena
     private size_t _offset;
     private size_t _align = Config.MemAlign;
     private size_t _resizeRatio = Config.ResizeRatio;
-    private MemoryProvedance _provedance;
+    private MemoryProvenance _provedance;
 
-    this(size_t capacity, MemoryProvedance provedance = MemoryProvedance.SCOPE)
+    this(size_t capacity, MemoryProvenance provedance = MemoryProvenance.SCOPE)
     {
         assert((capacity & (capacity - 1)) == 0, "Capacity must be power of 2");
         this._capacity = capacity;
@@ -48,7 +48,7 @@ struct Arena
         return this._offset;
     }
 
-    @property MemoryProvedance provedance() pure const nothrow @safe
+    @property MemoryProvenance provedance() pure const nothrow @safe
     {
         return this._provedance;
     }
