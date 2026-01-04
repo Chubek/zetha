@@ -2,7 +2,7 @@ module zetha.infra.arena;
 
 import zetha.infra.config : Config;
 import zetha.infra.strpool : StringHandle;
-import zetha.infra.abstyy : Set, Map;
+import zetha.infra.abstyy : Set;
 
 import std.lifetime : emplace;
 import core.stdc.string : memmove;
@@ -13,6 +13,7 @@ enum MemoryProvenance
     PERMANENT,
     FUNCTION,
     SCOPE,
+    TEMPORARY,
 }
 
 struct Arena
@@ -99,15 +100,15 @@ struct Arena
 }
 
 synchronized shared static Arena gPermanentArena;
-synchronized shared static Map!(TransUnit, Arena) gTransUnitArena;
-synchronized shared static Map!(StringHandle, Arena) gFunctionArena;
+synchronized shared static Arena[StringHandle] gFunctionArena;
 synchronized shared static Stack!Arena gScopeArena;
+synchronized shared static Arena gTemporaryArena;
 
 static this()
 {
-    gPermanentArena = Arena(Config.PermanentArenaSize);
-    gTransUnitArena = new Map!(TransUnit, Arena);
-    gFunctionArena = new Map!(StringHandle, Arena);
+    gPermanentArena = Arena(Config.PermanentArenaSize, MemoryProvenance.PERMANENT);
+    gTemporaryArena = Arena(Config.TemporaryArenaSize, MemoryProvenance.TEMPORARY);
+    gFunctionArena = new Arena[StringHandle];
     gScopeArena = new Stack!(Arena);
 }
 
@@ -116,9 +117,9 @@ T* allocatePermanently(T, Args...)(size_t numUnits, Args ctors)
     return gPermanentArena.allocateSafely!T(numUnits, ctors);
 }
 
-T* allocateForTransUnit(T, Args...)(TransUnit tu, size_t numUnits, Args ctors)
+T* allocateTemporarily(T, Args...)(size_t numUnits, Args ctors)
 {
-    return gTransUnitArena[tu].allocateSafely(numUnits, ctors);
+    return gTemporaryArena.allocateSafely!T(numUnits, ctors);
 }
 
 T* allocateForFunction(T, Args...)(StringHandle funcName, size_t numUnits, Args ctors)
@@ -131,9 +132,14 @@ T* allocateForScope(T, Args...)(size_t numUnits, Args ctors)
     return gScopeArena.front.allocateSafely!T(numUnits, ctors);
 }
 
+void newFunctionArena(StringHandle funcName) @safe @trusted
+{
+    gFunctionArena[funcName] = Arena(Config.FunctionArenaSize, MemoryProvenance.FUNCTION);
+}
+
 void pushScopeArena() @safe @trusted
 {
-    gScopeArena.pushFreshFront();
+    gScopeArena.push(Arena(Config.ScopeArenaSize));
 }
 
 void popScopeArena() @safe @trusted
